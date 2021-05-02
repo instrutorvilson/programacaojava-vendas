@@ -7,11 +7,15 @@ package vendas;
 
 import DAO.DaoCliente;
 import DAO.DaoProduto;
+import entities.Itens;
 import entities.Produto;
+import entities.Venda;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
 
@@ -112,7 +116,15 @@ public class Cadastrovendas extends javax.swing.JFrame {
 
         jLabel5.setText("Total:");
 
+        jTtotalPedido.setEditable(false);
+        jTtotalPedido.setText("0");
+
         jButton2.setText("Finalizar pedido");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         jLabel6.setText("Codigo do produto");
 
@@ -266,7 +278,7 @@ public class Cadastrovendas extends javax.swing.JFrame {
         } catch (SQLException ex) {
             Logger.getLogger(Cadastrovendas.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+  
         //carrega os produtos na lista
         try {
             ResultSet rs =  DaoProduto.getAll();
@@ -288,10 +300,25 @@ public class Cadastrovendas extends javax.swing.JFrame {
         jTestoque.setText(String.valueOf(produto.getEstoque()));
     }
     
+    private float calculaTotalPedido(){
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        float soma = 0;
+        for(int i = 0; i < dtm.getRowCount(); i++){
+           soma = soma + (float)dtm.getValueAt(i, 4);
+        }
+        return soma;
+    }
+    
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        if(jTquantidade.getText().isEmpty()){
+            JOptionPane.showMessageDialog(rootPane, "Informe quantidade");
+            jTquantidade.requestFocus();
+            return;
+        }
+        
         DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
         float subtotal = Float.parseFloat(jTpreco.getText()) 
-                + Float.parseFloat(jTquantidade.getText());
+                * Float.parseFloat(jTquantidade.getText());
         dtm.addRow(new Object[]{ 
                    jTcodProduto.getText(),
                    jTdescricao.getText(),
@@ -299,6 +326,11 @@ public class Cadastrovendas extends javax.swing.JFrame {
                    jTquantidade.getText(),
                    subtotal
                });
+        float totalAtual = Float.parseFloat(jTtotalPedido.getText());
+        jTtotalPedido.setText(String.valueOf(subtotal + totalAtual));
+       // jTtotalPedido.setText(String.valueOf(calculaTotalPedido()));
+       
+       jTquantidade.setText("");
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jCprodutosItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_jCprodutosItemStateChanged
@@ -310,6 +342,33 @@ public class Cadastrovendas extends javax.swing.JFrame {
     private void jTcodProdutoFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTcodProdutoFocusLost
         consultaDadosProduto(jTcodProduto.getText());
     }//GEN-LAST:event_jTcodProdutoFocusLost
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        //gravar venda
+        Venda venda = new Venda();
+        venda.setData(Date.valueOf("2020-04-02"));
+        venda.setStatus("A");
+        
+        int pos = jCcliente.getSelectedItem().toString().indexOf("-");
+        String codcliente = jCcliente.getSelectedItem().toString().substring(0, pos);
+        venda.setIdcliente(Integer.parseInt(codcliente));
+        if(venda.salvar()){           
+          //gravar itens da venda 
+          DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+          for(int i = 0; i < dtm.getRowCount(); i++){
+             Itens item = new Itens();
+             int produto =  Integer.parseInt(dtm.getValueAt(i, 0).toString());
+             item.setIdproduto(produto); 
+             item.setIdvenda(venda.getIdvenda());
+             item.setPrecoItem(Float.parseFloat(dtm.getValueAt(i, 2).toString()));
+             item.setQtde(Float.parseFloat(dtm.getValueAt(i, 3).toString()));
+             item.salvar();
+          }
+          JOptionPane.showMessageDialog(rootPane, "Venda cadastrada");          
+        }
+        
+        
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
