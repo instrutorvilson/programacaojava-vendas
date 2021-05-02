@@ -13,6 +13,6 @@ import java.sql.ResultSet;
 public interface DaoInterface {
    public boolean salvar(); 
    public boolean editar();
-   public ResultSet getAll();
+   public ResultSet getAll(String filtro);
    public Object getById(int id);
 }

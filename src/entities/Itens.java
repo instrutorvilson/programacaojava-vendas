@@ -102,7 +102,7 @@ public class Itens implements DaoInterface{
     }
 
     @Override
-    public ResultSet getAll() {
+    public ResultSet getAll(String filtro) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
